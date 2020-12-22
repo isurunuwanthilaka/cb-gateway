@@ -1,0 +1,51 @@
+version: '3'
+services:
+  postgres:
+    image: postgres
+    volumes:
+      - ./postgresql/init.sql /docker-entrypoint-initdb.d/
+      - ./postgresql/lib/postgresql1/data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=sltott
+      - POSTGRES_PASSWORD=sltott#123
+      - POSTGRES_DB=ott_user
+  api-gateway:
+    build: ./api-gateway
+    image: api-gateway:dev
+    ports:
+      - "9000:9000"
+    depends_on: 
+      - user-service
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka
+      SPRING_PROFILES_ACTIVE: path
+      SPRING_CLOUD_GATEWAY_ROUTES[0]_URI: http://localhost:8000
+      SPRING_CLOUD_GATEWAY_ROUTES[0]_ID: user-service
+      SPRING_CLOUD_GATEWAY_ROUTES[0]_PREDICATES[0]: Path=/users/v1/*
+      SPRING_CLOUD_GATEWAY_ROUTES[0]_FILTERS[0]: StripPrefix=1
+  registry-service:
+    build: ./ms-discovery-and-registry
+    image: registry-service:dev
+    ports:
+      - "8761:8761"
+    expose:
+      - "8761"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka
+      eureka.instance.preferIpAddress: 'false'
+  user-service:
+    build: ./user-service
+    image: user-service:dev
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka
+      DATABASE_HOST: postgres
+      eureka.client.enabled: 'true'
+      eureka.host: registry-service
+      
+
