@@ -13,11 +13,13 @@ eureka:
 spring:
   application:
     name: api-gateway
+  cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: true
       routes:
-        - id: promotion
-          uri: http://promotion:9500
+        - id: inventory
+          uri: lb://inventory
           predicates:
-            - Path=/promotions/v1/promotions/all/banners
-          filters:
-            - StripPrefix=1
+            - Path=/hello
