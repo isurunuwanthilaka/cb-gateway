@@ -22,4 +22,9 @@ spring:
         - id: inventory
           uri: lb://inventory
           predicates:
-            - Path=/hello
+          - Path=/hello
+          filters:
+          - name: CircuitBreaker
+            args:
+              name: myCircuitBreaker
+              fallbackUri: forward:/fallback
